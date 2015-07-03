@@ -165,17 +165,14 @@
                              #(let [{:keys [metric path time rollup period ttl]} %]
                                 [(int ttl) [metric] (int rollup) (int period) path time])
                              payload)]
-                 (take!
                   (apply pcalls
-                    (map
-                      (fn [v]
-                        (alia/execute-chan session (insert! values) {:consistency :any})
-                        (fn [rows-or-e]
-                          (if (instance? Throwable rows-or-e)
-                            (info rows-or-e "Cassandra error")
-                            (debug "Batch written"))))
-                      values
-                    ))))
+                    (map (fn [v] (take!
+                          (alia/execute-chan session (insert! values) {:consistency :any})
+                          (fn [rows-or-e]
+                            (if (instance? Throwable rows-or-e)
+                              (info rows-or-e "Cassandra error")
+                              (debug "Batch written")))))
+                      values)))
                (catch Exception e
                  (info e "Store processing exception")))))
           ch))
